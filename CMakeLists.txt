@@ -15,4 +15,4 @@ link_directories("/usr/local/lib" "/usr/lib" "${PROJECT_SOURCE_DIR}/deps/pili-ca
 
 add_executable(demo ${SOURCE_FILES})
 
-target_link_libraries(demo "libpili_push.a")
+target_link_libraries(demo "libpili_push.a" "librtmp.a")
