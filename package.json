@@ -1,0 +1,14 @@
+{
+  "name": "pili-camera-sdk-demo",
+  "version": "0.1.0",
+  "repo": "pili-io/pili-camera-sdk-demo",
+  "license": "Apache 2.0",
+  "dependencies": {
+    "pili-io/pili-camera-sdk": "*"
+  },
+  "src":[
+    "src/demo.c",
+    "src/flv-parser.c",
+    "src/flv-parser.h"
+  ]
+}
