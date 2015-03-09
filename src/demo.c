@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "flv-parser.h"
-#include "push.h"
+#include <pili-camera-sdk/push.h>
 
 void usage(char *program_name) {
     printf("Usage: %s [input.flv]\n", program_name);

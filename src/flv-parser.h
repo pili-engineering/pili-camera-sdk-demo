@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "data_defines.h"
+#include <pili-camera-sdk/data_defines.h>
 
 #define FLV_HEADER_AUDIO_BIT (2)
 #define FLV_HEADER_VIDEO_BIT (0)

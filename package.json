@@ -4,6 +4,7 @@
   "repo": "pili-io/pili-camera-sdk-demo",
   "license": "Apache 2.0",
   "dependencies": {
+    "Akagi201/librtmp": "*",
     "pili-io/pili-camera-sdk": "*"
   },
   "src":[
