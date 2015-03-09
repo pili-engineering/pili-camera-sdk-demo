@@ -9,6 +9,8 @@
 #include "flv-parser.h"
 #include <pili-camera-sdk/push.h>
 
+#define RTMP_URL    "rtmp://localhost/live/inrtmp"
+
 void usage(char *program_name) {
     printf("Usage: %s [input.flv]\n", program_name);
     exit(-1);
@@ -26,8 +28,7 @@ pili_stream_context_p g_ctx = NULL;
 bool g_ready_to_send_packet = false;
 
 void start_push(pili_metadata_packet_p metadata_packet) {
-//    const char *url = "rtmp://111.206.234.143/camerasdk/test";
-    const char *url = "rtmp://localhost/live/inrtmp";
+    const char *url = RTMP_URL;
     
     int cnt = 0, ret = -1;
     
