@@ -9,9 +9,9 @@ project(demo)
 
 set(SOURCE_FILES src/demo.c src/flv-parser.c)
 
-include_directories("${PROJECT_SOURCE_DIR}/deps" "${PROJECT_SOURCE_DIR}/src" "/usr/local/include" "/usr/include")
+include_directories("${PROJECT_SOURCE_DIR}/deps" "${PROJECT_SOURCE_DIR}/deps/pili-camera-sdk/src/include" "${PROJECT_SOURCE_DIR}/src" "/usr/local/include" "/usr/include")
 
-link_directories("/usr/local/lib" "/usr/lib" "${PROJECT_SOURCE_DIR}/deps/pili-camera-sdk")
+link_directories("/usr/local/lib" "/usr/lib" "${PROJECT_SOURCE_DIR}/deps/pili-camera-sdk/src/lib/linux_i386")
 
 add_executable(demo ${SOURCE_FILES})
 

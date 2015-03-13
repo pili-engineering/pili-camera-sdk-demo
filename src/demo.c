@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "flv-parser.h"
-#include <pili-camera-sdk/push.h>
+#include "push.h"
 
 #define RTMP_URL    "rtmp://localhost/live/inrtmp"
 
