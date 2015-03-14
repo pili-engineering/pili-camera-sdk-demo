@@ -11,8 +11,8 @@ set(SOURCE_FILES src/demo.c src/flv-parser.c)
 
 include_directories("${PROJECT_SOURCE_DIR}/deps" "${PROJECT_SOURCE_DIR}/deps/pili-camera-sdk/src/include" "${PROJECT_SOURCE_DIR}/src" "/usr/local/include" "/usr/include")
 
-link_directories("/usr/local/lib" "/usr/lib" "${PROJECT_SOURCE_DIR}/deps/pili-camera-sdk/src/lib/linux_i386")
+link_directories("/usr/local/lib" "/usr/lib" "${PROJECT_SOURCE_DIR}/deps/pili-camera-sdk/src/lib/darwin_amd64" "/usr/local/Cellar/openssl/1.0.2/lib" "/usr/local/Cellar/zlib/1.2.8/lib")
 
 add_executable(demo ${SOURCE_FILES})
 
-target_link_libraries(demo "libpili_push.a")
+target_link_libraries(demo "libpili_push.a" "libcrypto.a" "libssl.a" "libz.a")
