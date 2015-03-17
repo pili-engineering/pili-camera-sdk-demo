@@ -23,4 +23,4 @@ endif()
 
 add_executable(demo ${SOURCE_FILES})
 
-target_link_libraries(demo "libpili_push.a" "libcrypto.a" "libssl.a" "libz.a")
+target_link_libraries(demo "libpili_push.a" "libcrypto.a" "libssl.a" "libz.a" "pthread" ${CMAKE_DL_LIBS})
