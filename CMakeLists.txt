@@ -11,7 +11,13 @@ set(SOURCE_FILES src/demo.c src/flv-parser.c)
 
 include_directories("${PROJECT_SOURCE_DIR}/deps" "${PROJECT_SOURCE_DIR}/deps/pili-camera-sdk/src/include" "${PROJECT_SOURCE_DIR}/src" "/usr/local/include" "/usr/include")
 
-link_directories("/usr/local/lib" "/usr/lib" "${PROJECT_SOURCE_DIR}/deps/pili-camera-sdk/src/lib/darwin_amd64" "/usr/local/Cellar/openssl/1.0.2/lib" "/usr/local/Cellar/zlib/1.2.8/lib")
+if (darwin_amd64)
+link_directories("/usr/local/lib" "/usr/lib" "${PROJECT_SOURCE_DIR}/deps/pili-camera-sdk/src/lib/darwin_amd64")
+elseif (linux_386)
+link_directories("/usr/local/lib" "/usr/lib" "${PROJECT_SOURCE_DIR}/deps/pili-camera-sdk/src/lib/linux_386")
+else()
+MESSAGE(FATAL_ERROR "cmake -DOS_ARCH=1 ..")
+endif()
 
 add_executable(demo ${SOURCE_FILES})
 
