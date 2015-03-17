@@ -15,6 +15,9 @@ include_directories("${PROJECT_SOURCE_DIR}/deps" "${PROJECT_SOURCE_DIR}/deps/pil
 
 if (darwin_amd64)
 link_directories("/usr/local/lib" "/usr/lib" "${PROJECT_SOURCE_DIR}/deps/pili-camera-sdk/src/lib/darwin_amd64")
+elseif (linux_amd64)
+link_directories("/usr/local/lib" "/usr/lib"
+    "${PROJECT_SOURCE_DIR}/deps/pili-camera-sdk/src/lib/linux_amd64")
 elseif (linux_386)
 link_directories("/usr/local/lib" "/usr/lib" "${PROJECT_SOURCE_DIR}/deps/pili-camera-sdk/src/lib/linux_386")
 else()
@@ -23,4 +26,5 @@ endif()
 
 add_executable(demo ${SOURCE_FILES})
 
-target_link_libraries(demo "libpili_push.a" "libcrypto.a" "libssl.a" "libz.a" "pthread" ${CMAKE_DL_LIBS})
+target_link_libraries(demo "libpili_push.a" "libssl.a"
+    "libcrypto.a" "libz.a" "pthread" ${CMAKE_DL_LIBS})
