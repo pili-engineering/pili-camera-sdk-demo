@@ -7,6 +7,8 @@
 cmake_minimum_required(VERSION 2.8.4)
 project(demo)
 
+message("CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
+
 set(SOURCE_FILES src/demo.c src/flv-parser.c)
 
 include_directories("${PROJECT_SOURCE_DIR}/deps" "${PROJECT_SOURCE_DIR}/deps/pili-camera-sdk/src/include" "${PROJECT_SOURCE_DIR}/src" "/usr/local/include" "/usr/include")
