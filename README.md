@@ -1,23 +1,13 @@
 # pili-camera-sdk-demo
 An example based on the pili-camera-sdk.
 
-## 使用
-```
-# get submodule
-git submodule update --init
-
-# update url
-将 demo.c 中 RTMP_URL 改为你的推流地址
-
-# build
-./start_build.sh
-
-# run
-./build/demo ${YOUR_FLV_FILE_PATH}
-```
-
-## 更新 submodule
+## build
 
 ```
-./update_submodule.sh
+$ mkdir build
+$ cd build
+$ cmake -DOS_ARCH=1 ..
+$ make
 ```
+
+其中OS_ARCH根据编译平台不同而选择, darwin_amd64, linux_amd64, linux_386
