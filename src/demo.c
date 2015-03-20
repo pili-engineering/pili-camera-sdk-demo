@@ -9,26 +9,32 @@
 #include "flv-parser.h"
 #include "push.h"
 
-#define RTMP_URL    "rtmp://localhost/live/inrtmp"
+char *g_url = NULL;
 
 void usage(char *program_name) {
-    printf("Usage: %s [input.flv]\n", program_name);
+    printf("Usage: %s [input.flv] [your_push_url]\n", program_name);
     exit(-1);
 }
 
 void audio_sent_callback(pili_audio_packet_p packet) {
+    free(packet->audio_tag);
+    packet->audio_tag = NULL;
     pili_audio_packet_release(packet);
+    packet = NULL;
 }
 
 void video_sent_callback(pili_video_packet_p packet) {
+    free(packet->video_tag);
+    packet->video_tag = NULL;
     pili_video_packet_release(packet);
+    packet = NULL;
 }
 
 pili_stream_context_p g_ctx = NULL;
 bool g_ready_to_send_packet = false;
 
 void start_push(pili_metadata_packet_p metadata_packet) {
-    const char *url = RTMP_URL;
+    const char *url = g_url;
     
     int cnt = 0, ret = -1;
     
@@ -66,13 +72,15 @@ void parsed_audio_tag(pili_audio_packet_p a_packet) {
 int main(int argc, char *argv[]) {
     FILE *infile = NULL;
     
-    if (argc == 1) {
-        infile = stdin;
+    if (3 != argc) {
+        usage(argv[0]);
     } else {
         infile = fopen(argv[1], "r");
         if (!infile) {
             usage(argv[0]);
         }
+        
+        g_url = argv[2];
     }
     
     flv_parser_init(infile);
