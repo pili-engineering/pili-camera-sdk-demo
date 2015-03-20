@@ -339,8 +339,6 @@ int flv_parser_run(metadata_callback m_cb, video_callback v_cb, audio_callback a
                 a_cb(pili_audio_packet);
             }
         }
-#warning 之后需要额外释放 tag，debug 时先忽略此处内存问题
-//        flv_free_tag(tag); // and free flv tag
     }
 }
 
