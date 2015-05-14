@@ -1,8 +1,10 @@
-/*
- * @file flv-parser.c
- * @author Akagi201
- * @date 2015/02/04
- */
+//
+//  flv-parser.c
+//  camera-sdk-demo
+//
+//  Created on 14/12/10
+//  Copyright (c) Pili Engineering, Qiniu Inc. All rights reserved.
+//
 
 #include <stdlib.h>
 #include <string.h>
@@ -12,6 +14,23 @@
 #include "flv-parser.h"
 
 #define HTONTIME(x) ((x>>16&0xff)|(x<<16&0xff0000)|(x&0xff00)|(x&0xff000000))
+
+char *put_be16(char *output, uint16_t nVal) {
+    output[1] = nVal & 0xff;
+    output[0] = nVal >> 8;
+    
+    return output + 2;
+}
+
+char *put_amf_string(char *c, const char *str) {
+    uint16_t len = (uint16_t) strlen(str);
+    *c = 0x02; // AMF0 type: String
+    ++c;
+    c = put_be16(c, len);
+    memcpy(c, str, len);
+    
+    return c + len;
+}
 
 // File-scope ("global") variables
 const char *flv_signature = "FLV";
@@ -168,91 +187,47 @@ size_t fread_4s(uint32_t *ptr) {
 /*
  * @brief read audio tag
  */
-audio_tag_t *read_audio_tag(flv_tag_t *flv_tag) {
+void read_audio_tag(flv_tag_p flv_tag) {
     assert(NULL != flv_tag);
     uint8_t byte = 0;
-    audio_tag_t *tag = NULL;
 
-    tag = malloc(sizeof(audio_tag_t));
     fread_1(&byte);
-
-    tag->sound_format = flv_get_bits(byte, 4, 4);
-    tag->sound_rate = flv_get_bits(byte, 2, 2);
-    tag->sound_size = flv_get_bits(byte, 1, 1);
-    tag->sound_type = flv_get_bits(byte, 0, 1);
+    fseek(g_infile, -1, SEEK_CUR);
+    
+    int sound_format = flv_get_bits(byte, 4, 4);
+    int sound_rate = flv_get_bits(byte, 2, 2);
+    int sound_size = flv_get_bits(byte, 1, 1);
+    int sound_type = flv_get_bits(byte, 0, 1);
 
     printf("  Audio tag:\n");
-    printf("    Sound format: %u - %s\n", tag->sound_format, sound_formats[tag->sound_format]);
-    printf("    Sound rate: %u - %s\n", tag->sound_rate, sound_rates[tag->sound_rate]);
+    printf("  - Sound format: %u - %s\n", sound_format, sound_formats[sound_format]);
+    printf("  - Sound rate: %u - %s\n", sound_rate, sound_rates[sound_rate]);
 
-    printf("    Sound size: %u - %s\n", tag->sound_size, sound_sizes[tag->sound_size]);
-    printf("    Sound type: %u - %s\n", tag->sound_type, sound_types[tag->sound_type]);
-
-    tag->data = malloc((size_t) flv_tag->data_size - 1);
-    fread(tag->data, (size_t) flv_tag->data_size - 1, 1, g_infile); // -1: audo data tag header
-
-    return tag;
+    printf("  - Sound size: %u - %s\n", sound_size, sound_sizes[sound_size]);
+    printf("  - Sound type: %u - %s\n", sound_type, sound_types[sound_type]);
+    
+    flv_tag->data = malloc((size_t) flv_tag->data_size);
+    fread(flv_tag->data, (size_t) flv_tag->data_size, 1, g_infile);
 }
 
 /*
  * @brief read video tag
  */
-video_tag_t *read_video_tag(flv_tag_t *flv_tag) {
+void read_video_tag(flv_tag_p flv_tag) {
     uint8_t byte = 0;
-    video_tag_t *tag = NULL;
-
-    tag = (video_tag_t *)malloc(sizeof(video_tag_t));
 
     fread_1(&byte);
     fseek(g_infile, -1, SEEK_CUR);
 
-    tag->frame_type = flv_get_bits(byte, 4, 4);
-    tag->codec_id = flv_get_bits(byte, 0, 4);
+    int frame_type = flv_get_bits(byte, 4, 4);
+    int codec_id = flv_get_bits(byte, 0, 4);
 
     printf("  Video tag:\n");
-    printf("    Frame type: %u - %s\n", tag->frame_type, frame_types[tag->frame_type]);
-    printf("    Codec ID: %u - %s\n", tag->codec_id, codec_ids[tag->codec_id]);
+    printf("  - Frame type: %u - %s\n", frame_type, frame_types[frame_type]);
+    printf("  - Codec ID: %u - %s\n", codec_id, codec_ids[codec_id]);
 
-    // AVC-specific stuff
-    if (tag->codec_id == FLV_CODEC_ID_AVC) {
-        tag->data = read_avc_video_tag(tag, flv_tag, (uint32_t) (flv_tag->data_size));
-    } else {
-        tag->data = malloc((size_t) flv_tag->data_size);
-        fread(tag->data, (size_t) flv_tag->data_size, 1, g_infile);
-    }
-
-    return tag;
-}
-
-/*
- * @brief read AVC video tag
- */
-avc_video_tag_t *read_avc_video_tag(video_tag_t *video_tag, flv_tag_t *flv_tag, uint32_t data_size) {
-    size_t count = 0;
-    avc_video_tag_t *tag = NULL;
-
-    tag = malloc(sizeof(avc_video_tag_t));
-
-    count = fread_1(&(tag->frame_type));
-    count += fread_1(&(tag->avc_packet_type));
-    //count += fread_4s(&(tag->composition_time));
-    count += fread_3(&(tag->composition_time));
-    count += fread_4(&(tag->nalu_len));
-
-    printf("    AVC video tag:\n");
-    printf("    frame type: %x\n", tag->frame_type);
-    printf("      AVC packet type: %u - %s\n", tag->avc_packet_type, avc_packet_types[tag->avc_packet_type]);
-    printf("      AVC composition time: %i\n", tag->composition_time);
-    printf("      AVC nalu length: %i\n", tag->nalu_len);
-
-    tag->data = malloc((size_t) data_size - count);
-    fread(tag->data, (size_t) data_size - count, 1, g_infile);
-
-    flv_tag->data = malloc((size_t) data_size);
-    fseek(g_infile, -data_size, SEEK_CUR);
-    fread(flv_tag->data, (size_t) data_size, 1, g_infile);
-
-    return tag;
+    flv_tag->data = malloc((size_t) flv_tag->data_size);
+    fread(flv_tag->data, (size_t) flv_tag->data_size, 1, g_infile);
 }
 
 void flv_parser_init(FILE *in_file) {
@@ -263,29 +238,30 @@ extern char *put_be16(char *output, uint16_t nVal);
 extern char *put_amf_string(char *c, const char *str);
 
 
-int flv_parser_run(metadata_callback m_cb, video_callback v_cb, audio_callback a_cb) {
-    flv_tag_t *tag = NULL;
+int flv_parser_run(flv_tag_callback cb) {
+    flv_tag_p tag = NULL;
     flv_read_header();
-    pili_video_packet_p pili_video_packet = NULL;
-    pili_audio_packet_p pili_audio_packet = NULL;
-    pili_metadata_packet_p pili_metadata_packet = NULL;
     
     uint32_t start_time = 0;
+    long first_frame_time = -1;
     //the timestamp of the previous frame
     long pre_frame_time = 0;
     long lasttime = 0;
     int b_next_is_key = 1;
     
+    int hasMetaDataParsed = 0;
+    
     //jump over previousTagSizen
     fseek(g_infile, 4, SEEK_CUR);
     start_time = RTMP_GetTime();
     for (; ;) {
-        if (((RTMP_GetTime() - start_time)
-             < (pre_frame_time)) && b_next_is_key) {
+        uint32_t now = RTMP_GetTime();
+        if (((now - start_time)
+             < (pre_frame_time - first_frame_time)) && b_next_is_key) {
             //wait for 1 sec if the send process is too fast
             //this mechanism is not very good,need some improvement
             if (pre_frame_time > lasttime) {
-                printf("TimeStamp:%8lu ms\n", pre_frame_time);
+                printf("Need to wait. TimeStamp:%8lu ms\n", pre_frame_time);
                 lasttime = pre_frame_time;
             }
             sleep(1);
@@ -298,76 +274,18 @@ int flv_parser_run(metadata_callback m_cb, video_callback v_cb, audio_callback a
         }
         
         pre_frame_time = tag->timestamp;
+        if (-1 == first_frame_time) {
+            first_frame_time = pre_frame_time;
+        }
         
-        if (TAGTYPE_VIDEODATA == tag->tag_type) {
-            pili_video_packet_create(&pili_video_packet);
-            pili_video_packet_init(pili_video_packet,
-                    (uint8_t *)tag->data,
-                    tag->data_size,
-                    tag->timestamp, // TODO: + avc_video_tag->composition_time,
-                    tag->timestamp,
-                    (*(uint8_t *)tag->data >> 4 == 1) ? 1 : 0);
-            
-            if (v_cb) {
-                v_cb(pili_video_packet);
-            }
-        } else if (TAGTYPE_SCRIPTDATAOBJECT == tag->tag_type) {
-            uint8_t *body = (uint8_t *)malloc(tag->data_size + 16);
-            memset(body, 0, tag->data_size + 16);
-            uint8_t *tmp_body = body;
-            tmp_body = (uint8_t *)put_amf_string((char *)tmp_body, "@setDataFrame");
-            memcpy(tmp_body, tag->data, tag->data_size);
-            
-            pili_metadata_packet_create(&pili_metadata_packet);
-            pili_metadata_packet_init(pili_metadata_packet,
-                                      tag->data_size + 16,
-                                      tag->timestamp,
-                                      tag->stream_id,
-                                      body);
-            
-            if (m_cb) {
-                m_cb(pili_metadata_packet);
-            }
-        } else if (TAGTYPE_AUDIODATA == tag->tag_type) {
-            pili_audio_packet_create(&pili_audio_packet);
-            pili_audio_packet_init(pili_audio_packet,
-                                   tag->data,
-                                   tag->data_size,
-                                   tag->timestamp);
-            
-            if (a_cb) {
-                a_cb(pili_audio_packet);
-            }
+        if (FLV_TAG_TYPE_SCRIPT == tag->tag_type) {
+            hasMetaDataParsed = 1;
         }
-    }
-}
-
-void flv_free_tag(flv_tag_t *tag) {
-    audio_tag_t *audio_tag;
-    video_tag_t *video_tag;
-    avc_video_tag_t *avc_video_tag;
-
-    if (tag->tag_type == TAGTYPE_VIDEODATA) {
-        video_tag = (video_tag_t *) tag->data;
-        if (video_tag->codec_id == FLV_CODEC_ID_AVC) {
-            avc_video_tag = (avc_video_tag_t *) video_tag->data;
-            free(avc_video_tag->data);
-            free(video_tag->data);
-            free(tag->data);
-            free(tag);
-        } else {
-            free(video_tag->data);
-            free(tag->data);
-            free(tag);
+        if (hasMetaDataParsed) {
+            cb(tag);
         }
-    } else if (tag->tag_type == TAGTYPE_AUDIODATA) {
-        audio_tag = (audio_tag_t *) tag->data;
-        free(audio_tag->data);
-        free(tag->data);
-        free(tag);
-    } else {
-        free(tag->data);
-        free(tag);
+        
+        flv_release_tag(tag);
     }
 }
 
@@ -391,21 +309,10 @@ int flv_read_header(void) {
 
 }
 
-void print_general_tag_info(flv_tag_t *tag) {
-    assert(NULL != tag);
-    printf("  Data size: %lu\n", (unsigned long) tag->data_size);
-    printf("  Timestamp: %lu\n", (unsigned long) tag->timestamp);
-    printf("  StreamID: %lu\n", (unsigned long) tag->stream_id);
-
-    return;
-}
-
-flv_tag_t *flv_read_tag(int *b_next_is_key) {
+flv_tag_p flv_read_tag(int *b_next_is_key) {
     uint32_t prev_tag_size = 0;
-    flv_tag_t *tag = NULL;
-
-    tag = malloc(sizeof(flv_tag_t));
-
+    flv_tag_p tag = (flv_tag_p)malloc(sizeof(flv_tag_t));
+    
     if (feof(g_infile)) {
         return NULL;
     }
@@ -420,23 +327,26 @@ flv_tag_t *flv_read_tag(int *b_next_is_key) {
     
     printf("Tag type: %u - Tag size: %u\n", tag->tag_type, tag->data_size);
     switch (tag->tag_type) {
-        case TAGTYPE_AUDIODATA:
-            printf("Audio data\n");
-            print_general_tag_info(tag);
-            tag->data = malloc((size_t)tag->data_size);
-            fread(tag->data, (size_t)tag->data_size, 1, g_infile);
+        case FLV_TAG_TYPE_AUDIO:
+            read_audio_tag(tag);
             break;
-        case TAGTYPE_VIDEODATA:
-            printf("Video data\n");
-            print_general_tag_info(tag);
-            tag->data = malloc((size_t)tag->data_size);
-            fread(tag->data, (size_t)tag->data_size, 1, g_infile);
+        case FLV_TAG_TYPE_VIDEO:
+            read_video_tag(tag);
             break;
-        case TAGTYPE_SCRIPTDATAOBJECT:
-            printf("Script data object\n");
-            print_general_tag_info(tag);
+        case FLV_TAG_TYPE_SCRIPT:
             tag->data = malloc((size_t) tag->data_size);
             fread(tag->data, (size_t)tag->data_size, 1, g_infile);
+            
+            uint8_t *body = (uint8_t *)malloc(tag->data_size + 16);
+            memset(body, 0, tag->data_size + 16);
+            uint8_t *tmp_body = body;
+            tmp_body = (uint8_t *)put_amf_string((char *)tmp_body, "@setDataFrame");
+            memcpy(tmp_body, tag->data, tag->data_size);
+            
+            free(tag->data);
+            tag->data = body;
+            tag->data_size += 16;
+            
             break;
         default:
             printf("Unknown tag type!\n");
@@ -449,7 +359,7 @@ flv_tag_t *flv_read_tag(int *b_next_is_key) {
     if (1 == fread(&type, 1, 1, g_infile)) {
         fseek(g_infile, -1, SEEK_CUR);
         
-        if (0x09 == type) {
+        if (FLV_TAG_TYPE_VIDEO == type) {
             fseek(g_infile, 11, SEEK_CUR);
             fread(&type, 1, 1, g_infile);
             fseek(g_infile, -1, SEEK_CUR);
@@ -463,13 +373,6 @@ flv_tag_t *flv_read_tag(int *b_next_is_key) {
             fseek(g_infile, -11, SEEK_CUR);
         }
     }
-
-#if 0
-    // Did we reach end of file?
-    if (feof(g_infile)) {
-        return NULL;
-    }
-    #endif
 
     return tag;
 }

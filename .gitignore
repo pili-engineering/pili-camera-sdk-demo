@@ -28,5 +28,4 @@
 *.hex
 /build
 /src/build
-*DS_Store*
-
+.DS_Store
