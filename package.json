@@ -1,15 +1,14 @@
 {
-  "name": "pili-camera-sdk-demo",
+  "name": "pili-camera-sdk",
   "version": "0.1.0",
-  "repo": "pili-io/pili-camera-sdk-demo",
+  "repo": "pili-io/pili-camera-sdk",
   "license": "Apache 2.0",
-  "dependencies": {
-    "Akagi201/librtmp": "*",
-    "pili-io/pili-camera-sdk": "*"
-  },
   "src":[
-    "src/demo.c",
-    "src/flv-parser.c",
-    "src/flv-parser.h"
+    "src/include/flv.h",
+    "src/include/pili_camera.h",
+    "src/include/pili_macro.h",
+    "src/include/pili_type.h",
+    "src/include/push.h",
+    "src/libpili_push.a"
   ]
 }
